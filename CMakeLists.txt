@@ -43,8 +43,27 @@ else()
     set(_ff_default_tests ON)
 endif()
 
+# Emscripten has no NetCDF, MPI or terminal: a browser build reads its data
+# from JS typed arrays. Detecting it here keeps `emcmake cmake` a one-liner.
+if(EMSCRIPTEN)
+    set(_ff_default_mpi OFF)
+    set(_ff_default_native OFF)
+    set(_ff_default_python OFF)
+    set(_ff_default_static ON)
+    set(_ff_default_tools OFF)
+    set(_ff_default_lfs OFF)
+    set(_ff_default_tests OFF)
+    set(_ff_default_netcdf OFF)
+    set(_ff_default_cli OFF)
+else()
+    set(_ff_default_netcdf ON)
+    set(_ff_default_cli ON)
+endif()
+
 option(FOREFIRE_ENABLE_MPI "Enable MPI coupling when MPI is available" ${_ff_default_mpi})
-option(FOREFIRE_ENABLE_NETCDF "Build the NetCDF-backed I/O paths" ON)
+option(FOREFIRE_ENABLE_NETCDF "Build the NetCDF-backed I/O paths" ${_ff_default_netcdf})
+option(FOREFIRE_BUILD_CLI "Build the interactive forefire command line shell" ${_ff_default_cli})
+option(FOREFIRE_BUILD_WASM "Build the Emscripten/embind module" ${EMSCRIPTEN})
 option(FOREFIRE_NATIVE_ARCH "Optimise for the build machine's CPU (-march=native)" ${_ff_default_native})
 option(FOREFIRE_BUILD_PYTHON "Build the pyforefire Python extension module" ${_ff_default_python})
 option(FOREFIRE_STATIC_CORE "Build the ForeFire core as a static library" ${_ff_default_static})
@@ -330,10 +349,44 @@ endif()
 # ----------------------------------
 # Main Project Executable
 # ----------------------------------
-add_executable(forefire app/forefire/ForeFire.cpp app/forefire/AdvancedLineEditor.cpp)
-target_link_libraries(forefire PRIVATE forefireL)
-if(_ff_warning_flags)
-    target_compile_options(forefire PRIVATE ${_ff_warning_flags})
+# The shell is termios-driven and has no meaning in a browser.
+if(FOREFIRE_BUILD_CLI)
+    add_executable(forefire app/forefire/ForeFire.cpp app/forefire/AdvancedLineEditor.cpp)
+    target_link_libraries(forefire PRIVATE forefireL)
+    if(_ff_warning_flags)
+        target_compile_options(forefire PRIVATE ${_ff_warning_flags})
+    endif()
+endif()
+
+# ----------------------------------
+# WebAssembly Module
+# ----------------------------------
+if(FOREFIRE_BUILD_WASM)
+    # The command parser reports bad input by throwing, and Emscripten
+    # defaults to -fno-exceptions, so the core needs them too.
+    target_compile_options(forefireL PRIVATE "-fexceptions")
+    add_executable(forefire_wasm bindings/wasm/forefire_wasm.cpp)
+    target_link_libraries(forefire_wasm PRIVATE forefireL)
+    # embind needs C++17 for this one file; the core stays on its standard.
+    # .mjs because the output is an ES module.
+    set_target_properties(forefire_wasm PROPERTIES
+        OUTPUT_NAME "forefire"
+        SUFFIX ".mjs"
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED ON)
+    target_compile_options(forefire_wasm PRIVATE "-fexceptions")
+    target_link_options(forefire_wasm PRIVATE
+        "--bind"
+        "-fexceptions"
+        "-sMODULARIZE=1"
+        "-sEXPORT_ES6=1"
+        "-sEXPORT_NAME=createForeFire"
+        "-sENVIRONMENT=web,worker,node"
+        "-sALLOW_MEMORY_GROWTH=1"
+        "-sINITIAL_MEMORY=64MB"
+        "-sSTACK_SIZE=4MB"
+        "-sEXPORTED_RUNTIME_METHODS=['FS']"
+        "-sFORCE_FILESYSTEM=1")
 endif()
 
 # ----------------------------------
@@ -366,7 +419,7 @@ if(FOREFIRE_BUILD_PYTHON)
     # `<env>/lib/pythonX.Y/site-packages/`, so a reference from one to the
     # other cannot survive installation. delocate produced exactly that broken
     # path on macOS. `pyforefire._cli` is the entry point that execs it.
-    if(_ff_wheel_build)
+    if(_ff_wheel_build AND FOREFIRE_BUILD_CLI)
         install(TARGETS forefire RUNTIME DESTINATION pyforefire)
     endif()
 endif()
@@ -386,7 +439,9 @@ if(NOT _ff_wheel_build)
     set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")  # Adjust as necessary
 
     # Specify installation directories
-    install(TARGETS forefire RUNTIME DESTINATION bin)
+    if(FOREFIRE_BUILD_CLI)
+        install(TARGETS forefire RUNTIME DESTINATION bin)
+    endif()
     if(NOT FOREFIRE_STATIC_CORE)
         # With a static core there is no libforefireL to install: it is linked
         # straight into the executables.

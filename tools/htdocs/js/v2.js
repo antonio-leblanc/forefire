@@ -9,11 +9,25 @@
   // The map fills a grid cell, so Leaflet must re-measure when the console opens/closes.
   if (typeof map !== 'undefined') {
     new ResizeObserver(() => map.invalidateSize()).observe($('map'));
+
+    // Dark basemap by default (OSM tiles inverted in CSS); plain OSM stays one click away.
+    let osm = null;
+    map.eachLayer((layer) => { if (layer instanceof L.TileLayer) osm = layer; });
+    const dark = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      className: 'tiles-dark'
+    });
+    if (osm) map.removeLayer(osm);
+    dark.addTo(map);
+    const bases = { Dark: dark };
+    if (osm) bases.OpenStreetMap = osm;
+    L.control.layers(bases, null, { position: 'topright' }).addTo(map);
   }
 
   // RosaceWind only paints on first interaction; draw it up front.
+  // The canvas is colour-inverted in CSS, so this lands on the accent orange.
   if (typeof rosace !== 'undefined') {
-    rosace.arrowColor = '#c2410c';
+    rosace.arrowColor = '#a33f05';
     rosace.draw();
   }
 
@@ -56,4 +70,18 @@
 
   // Snippet buttons fill the input; move focus there so Enter sends it.
   $('commandButtons').addEventListener('click', () => input.focus());
+
+  // ?include=real_case.ff runs a case on page load, then draws the front and lists layers.
+  const startCase = new URLSearchParams(location.search).get('include');
+  if (startCase) {
+    (async () => {
+      const out = await sendCommand(`include[${startCase}]`);
+      if (out === null || out.includes('wrong input file')) {
+        uiLog(`Could not open ${startCase}: include paths are relative to the folder forefire was started in`, 'error');
+        return;
+      }
+      await refreshMap(true);
+      await updateLayerList();
+    })();
+  }
 })();

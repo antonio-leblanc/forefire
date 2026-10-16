@@ -1,19 +1,20 @@
 /* ForeFire console — v2
-   Light, quiet chrome so the map and the fire front carry the colour. */
+   Dark, quiet chrome so the map and the fire front carry the colour. */
 
 :root {
-  --bg: #f6f5f2;
-  --panel: #ffffff;
-  --ink: #1d1c1a;
-  --ink-2: #5d5a54;
-  --ink-3: #98948c;
-  --line: #e7e4de;
-  --line-2: #d4d0c7;
-  --hover: #f1efea;
-  --accent: #c2410c;
-  --accent-hover: #a8380a;
-  --warn: #a16207;
-  --error: #b42318;
+  color-scheme: dark;
+  --bg: #121211;
+  --panel: #1a1a18;
+  --ink: #ecebe7;
+  --ink-2: #a8a49c;
+  --ink-3: #6e6b65;
+  --line: #292825;
+  --line-2: #3a3935;
+  --hover: #23221f;
+  --accent: #e8590c;
+  --accent-hover: #f76707;
+  --warn: #e0a526;
+  --error: #f0645a;
 
   --sans: "IBM Plex Sans", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
@@ -111,7 +112,7 @@ select {
 }
 input:focus, select:focus {
   border-color: var(--ink-2);
-  box-shadow: 0 0 0 3px rgba(29, 28, 26, 0.06);
+  box-shadow: 0 0 0 3px rgba(236, 235, 231, 0.06);
 }
 
 input[type="checkbox"] {
@@ -181,7 +182,13 @@ input[type="checkbox"] {
   align-items: center;
   gap: 12px;
 }
-.brand img { height: 26px; width: auto; }
+.brand img { height: 22px; width: auto; }
+.wordmark {
+  margin-left: -6px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
 .host {
   font: 11.5px var(--mono);
   color: var(--ink-3);
@@ -277,7 +284,7 @@ input[type="checkbox"] {
   width: 100%;
   height: 10px;
   border-radius: 2px;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 .colorbar-scale {
   display: flex;
@@ -321,7 +328,8 @@ input[type="checkbox"] {
   border-radius: 6px;
   background: var(--bg);
 }
-#wind { cursor: crosshair; }
+/* rosacewind.js paints black on white; invert it for the dark panel */
+#wind { cursor: crosshair; filter: invert(1) hue-rotate(180deg); }
 
 /* ---------- Map ---------- */
 
@@ -337,11 +345,12 @@ input[type="checkbox"] {
   height: auto !important;
   width: auto !important;
   margin: 0 !important;
-  background: #e9e7e2;
+  background: #0e0e0d;
 }
 
 .leaflet-container { font-family: var(--sans); }
-.leaflet-tile-pane { filter: saturate(0.55) contrast(0.95); }
+/* OSM tiles turned into a dark basemap (no API key needed) */
+.tiles-dark { filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.35); }
 
 .leaflet-bar {
   border: 1px solid var(--line-2) !important;
@@ -357,8 +366,15 @@ input[type="checkbox"] {
   border-bottom-color: var(--line) !important;
 }
 .leaflet-bar a:hover { background: var(--hover) !important; }
+.leaflet-bar a { background: var(--panel) !important; }
+.leaflet-control-attribution a { color: var(--ink-2) !important; }
+.leaflet-control-velocity {
+  background: rgba(18, 18, 17, 0.75) !important;
+  color: var(--ink-2) !important;
+  font: 11px var(--mono) !important;
+}
 .leaflet-control-attribution {
-  background: rgba(255, 255, 255, 0.8) !important;
+  background: rgba(18, 18, 17, 0.75) !important;
   font-size: 10px !important;
   color: var(--ink-3) !important;
 }
@@ -367,7 +383,7 @@ input[type="checkbox"] {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--panel);
   border: 2px solid var(--accent);
 }
 
@@ -503,3 +519,18 @@ body.logs-hidden .console-body { display: none; }
   .console-body { grid-template-columns: 1fr; }
   .history { display: none; }
 }
+
+/* Basemap switcher */
+.leaflet-control-layers {
+  background: var(--panel) !important;
+  color: var(--ink-2) !important;
+  border: 1px solid var(--line-2) !important;
+  border-radius: 5px !important;
+  box-shadow: none !important;
+}
+.leaflet-control-layers-toggle {
+  width: 30px !important;
+  height: 30px !important;
+  filter: invert(1) opacity(0.7);
+}
+.leaflet-control-layers-expanded { padding: 8px 12px !important; font-size: 12px; }

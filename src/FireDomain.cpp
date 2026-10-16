@@ -809,6 +809,8 @@
 					 dataBroker->registerLayer(name, newlayer);
 			 }
  
+			 /* Either an unknown type, or a flux layer whose model would not
+			  * instantiate; both leave the domain without the layer. */
 			 return false;
 		 }
  
@@ -3408,6 +3410,20 @@
  
  
  
+#ifdef FF_NO_NETCDF
+
+	 void FireDomain::loadArrivalTimeNC(string fname){
+		 cout << "loadArrivalTimeNC: this build has no NetCDF support, ignoring "
+			  << fname << endl;
+	 }
+
+	 void FireDomain::saveArrivalTimeNC(){
+		 cout << "saveArrivalTimeNC: this build has no NetCDF support, "
+				 "nothing written" << endl;
+	 }
+
+#else
+
 	 void FireDomain::loadArrivalTimeNC(string fname){
 			 if (getDomainID()!=0) return;
  
@@ -3546,6 +3562,8 @@
 	 }
  
  
+#endif /* FF_NO_NETCDF */
+
 	 void FireDomain::visualizeBurningMatrixAroundNode(FireNode* fn){
 		 if( !striclyWithinDomain(fn) ) return;
 		 /* Position of the firenode in the burning matrix */

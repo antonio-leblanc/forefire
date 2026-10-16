@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ForeFire Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <link rel="stylesheet" href="js/leaflet-velocity.css" />
+  <link rel="stylesheet" href="v2.css" />
+
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" defer></script>
+  <script src="https://unpkg.com/togeojson@0.16.0/togeojson.js" defer></script>
+  <script src="js/leaflet-velocity.js" defer></script>
+  <script src="js/rosacewind.js" defer></script>
+  <script src="js/forefireGUI.js" defer></script>
+  <script src="js/v2.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="img/forefire_logo.svg" alt="">
+      <span class="host" id="hostLabel"></span>
+    </div>
+
+    <div class="clock">
+      <span class="eyebrow">Simulation time</span>
+      <span id="dateHeader">—</span>
+    </div>
+
+    <div class="topbar-actions">
+      <label class="switch">
+        <input type="checkbox" id="autoRefreshCheckbox">
+        <span>Live</span>
+      </label>
+      <button id="refreshMap" class="btn">Refresh map</button>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Layers</h2>
+        <button id="updateLayers" class="link">Reload</button>
+      </div>
+      <ul id="layerList"></ul>
+      <p class="empty-hint">Press reload to fetch layers from the running simulation.</p>
+    </section>
+
+    <section class="panel" id="colorbarPanel">
+      <div class="panel-head">
+        <h2 class="colorbar-header">Colour scale</h2>
+      </div>
+      <canvas id="colorbarCanvas" width="160" height="16"></canvas>
+      <div class="colorbar-scale">
+        <span id="colorbarMinLabel">N/A</span>
+        <span id="colorbarMaxLabel">N/A</span>
+      </div>
+      <div class="colorbar-controls">
+        <label>
+          <span>Min</span>
+          <input type="number" id="colorbarMinInput" step="any" placeholder="auto">
+        </label>
+        <label>
+          <span>Max</span>
+          <input type="number" id="colorbarMaxInput" step="any" placeholder="auto">
+        </label>
+        <label class="span-2">
+          <span>Colormap</span>
+          <select id="colorbarCmapSelect"></select>
+        </label>
+        <label class="check span-2">
+          <input type="checkbox" id="colorbarAutoFit" checked>
+          <span>Fit range to data</span>
+        </label>
+      </div>
+      <div class="colorbar-actions">
+        <button id="colorbarApply" class="btn">Apply</button>
+        <button id="colorbarUseData" class="btn ghost">Use data range</button>
+      </div>
+      <div id="colorbarStatus"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Wind</h2>
+        <label class="check">
+          <input type="checkbox" id="WindOrParts" checked>
+          <span>Arrows</span>
+        </label>
+      </div>
+      <div class="wind-rose">
+        <canvas id="wind" width="100" height="100"></canvas>
+      </div>
+    </section>
+  </aside>
+
+  <main class="stage">
+    <div id="map"></div>
+  </main>
+
+  <section class="console">
+    <div class="console-bar">
+      <h2>Console</h2>
+      <div id="commandButtons"></div>
+      <label class="check">
+        <input type="checkbox" id="toggleLogs" checked>
+        <span>Output</span>
+      </label>
+    </div>
+    <div class="console-body">
+      <div id="responseConsole"></div>
+      <div class="history">
+        <span class="eyebrow">History</span>
+        <div id="commandHistory"></div>
+      </div>
+    </div>
+    <div id="inputArea">
+      <span class="prompt">ff:</span>
+      <input type="text" id="commandInput" placeholder="step[dt=1200]" autocomplete="off" spellcheck="false">
+      <button id="sendCommand" class="btn primary">Send</button>
+    </div>
+  </section>
+</body>
+</html>
